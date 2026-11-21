@@ -1,0 +1,51 @@
+{
+  "model_class": "PEMGeoCast",
+  "architecture": "PEM-GeoCast Compact-B",
+  "diseases": ["ASF", "FMD", "PPR"],
+  "forecast_horizons_months": [1, 2, 3],
+  "input": {
+    "history_months": 6,
+    "channels": 155,
+    "event_history_channels": 3,
+    "local_predictor_channels": 152,
+    "formal_node_count": 3236
+  },
+  "dimensions": {
+    "hidden": 128,
+    "embedding": 16,
+    "adaptive_topk": 20,
+    "dropout": 0.2
+  },
+  "geographic_relations": {
+    "active": ["LOCAL_SUSCEPTIBILITY", "GEO_EXACT_HOP1", "GEO_EXACT_HOP2", "GEO_EXACT_HOP3"],
+    "fusion": "fixed_uniform",
+    "weights": [0.25, 0.25, 0.25, 0.25],
+    "required_npz_keys": ["geo_hop1_edge_index", "geo_hop2_edge_index", "geo_hop3_edge_index"],
+    "formal_directed_edge_counts": {
+      "geo_hop1_edge_index": 14854,
+      "geo_hop2_edge_index": 30970,
+      "geo_hop3_edge_index": 48054
+    }
+  },
+  "frozen_compatibility_modules": [
+    "adaptive",
+    "adapt_proj",
+    "temporal.pool1",
+    "temporal.pool3",
+    "temporal.scale_score",
+    "router_state",
+    "relation_router",
+    "single_source",
+    "single_task"
+  ],
+  "parameter_counts": {
+    "trainable": 255932,
+    "total_including_frozen_compatibility_modules": 526532
+  },
+  "formal_environment": {
+    "python": "3.10.6",
+    "numpy": "1.23.5",
+    "pytorch": "1.12.1+cu113"
+  },
+  "formal_training_seeds": [20260824, 20260825, 20260826]
+}
