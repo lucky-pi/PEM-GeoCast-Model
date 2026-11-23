@@ -32,8 +32,8 @@ statistics cannot be reproduced from this repository alone.
 ## Frozen architecture
 
 The model expects an input tensor with shape `[batch, nodes, 6, 155]`. The
-first three channels are the disease-history channels; the remaining 152 are
-local predictors. The final Compact-B forward graph uses:
+runtime channel order is three disease-history channels, 150 LOCAL covariates,
+and two deterministic calendar channels. The final Compact-B forward graph uses:
 
 - the full six-month temporal state;
 - a disease-history encoder;
@@ -47,6 +47,14 @@ The adaptive graph and learned temporal/relation routing modules remain
 instantiated but frozen. They are retained solely for strict state-dictionary
 compatibility with the formal checkpoints and do not contribute to the final
 Compact-B forward path.
+
+The training-time feature transformations and channel manifest are summarized
+in [`docs/preprocessing.md`](docs/preprocessing.md) and
+[`config/runtime_input_channels.csv`](config/runtime_input_channels.csv).
+The exact administrative polygon adjacency-builder source and graph assets are
+not included in this repository; the model consumes externally supplied frozen
+edge-shell arrays under the graph contract below. The adjacency-construction
+procedure is therefore not reproducible from this model-only release.
 
 The formal architecture has 255,932 trainable parameters and 526,532 total
 instantiated parameters, including frozen compatibility modules.
