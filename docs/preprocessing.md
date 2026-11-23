@@ -1,63 +1,29 @@
-# Frozen input preprocessing
+# Frozen input preprocessing specification
 
-This document records the feature transformations used by the frozen
-Compact-B training loader. It does not include source datasets, transformed
-feature arrays, node-level records, or the private data loader.
+This document follows the preprocessing description in the submitted manuscript and Supplementary Data S1. The field-level feature names, dictionary indices, runtime indices, source labels, semantic units, temporal and spatial rules, and preprocessing categories are given in [`../config/runtime_input_channels.csv`](../config/runtime_input_channels.csv).
 
 ## Runtime tensor layout
 
-The model input has shape `[batch, nodes, history, channels]`, with 155 channels
-in this order:
+Each sample contains six consecutive historical months and 3,236 ADM1-equivalent nodes. Before the model forward pass, the loader converts `[B, T, N, F]` to `[B, N, T, F]` without changing channel values or temporal order. The 155 input channels are ordered as follows:
 
-1. Disease-history indicators: ASF, FMD, PPR (3 channels).
-2. LOCAL covariates (150 channels): 98 ERA5, 8 host-exposure, 24 host-data
-   indicators, and 20 NDVI/quality channels.
-3. Calendar encoding: month sine and cosine (2 channels).
+- 0–2: ASOF outbreak-history indicators for ASF, FMD, and PPR;
+- 3–100: 98 ERA5 climate and derived features;
+- 101–132: 32 host-related features, comprising 8 numerical exposures and 24 indicators;
+- 133–152: 20 MODIS MOD13C2.061 vegetation features;
+- 153–154: month sine and cosine encodings.
 
-`config/runtime_input_channels.csv` maps runtime channel indices to the
-feature-manifest indices and names.
+## Training-derived preprocessing
 
-## Continuous-feature transform
+All data-dependent preprocessing statistics are estimated from TRAIN and applied unchanged to VALID, the internal temporal holdout, and the extended temporal sensitivity period. No evaluation-period observations are used to refit these parameters.
 
-For each continuous feature, the frozen loader applies TRAIN-derived
-statistics. Let `x` be the input, `q01` and `q99` the TRAIN 1st and 99th
-percentiles, `m` the TRAIN imputation statistic, `c` the TRAIN center, and `s`
-the TRAIN robust scale. When both percentile bounds are finite and
-`q99 >= q01`, values are clipped to `[q01, q99]`; non-finite values are then
-replaced by `m`; finally the result is `(x - c) / max(abs(s), EPS)`. The cached
-metadata records that preprocessing statistics were reused from training and
-were not refit for evaluation.
+For the 98 ERA5 features and 12 continuous NDVI-derived features, the manuscript specifies field-appropriate clipping at frozen TRAIN 1st- and 99th-percentile limits, replacement of non-finite values using TRAIN imputation statistics, and robust scaling with a numerical scale floor. The 8 numerical host-exposure variables are log1p-transformed before their corresponding TRAIN-derived preprocessing. The 3 NDVI valid-observation counts retain count semantics, and the 4 vegetation-area fractions retain their proportion semantics in [0, 1].
 
-This transform is used for the 98 ERA5 channels, 8 host-exposure channels, and
-19 continuous NDVI/quality channels. Host statistics are indexed by host
-species and feature.
+The 24 host-source/missingness indicators and `ndvi_lag1_missing` remain binary indicators without ordinary continuous-variable scaling. The three ASOF outbreak-history channels and two cyclic calendar encodings are constructed directly.
 
-## Indicator and deterministic channels
+## Forecast-time availability boundary
 
-- The 24 host-data indicators are cast directly to `float32`; they bypass
-  clipping, imputation, centering, and scaling.
-- `ndvi_lag1_missing` is an identity indicator: non-finite values are replaced
-  with zero, with no clipping or scaling.
-- The three disease-history channels are the forecast-time-observable event
-  history supplied by the frozen index. They are not imputed or scaled here.
-- Calendar sine/cosine channels are deterministic and are not imputed or
-  scaled.
+The reporting-date filter constrains outbreak-history predictors. ERA5 features use reference months through the forecast origin; NDVI uses the month before the origin and earlier; FAOSTAT uses the prior reference year. Host spatial allocation and administrative boundaries are frozen retrospectively. Historical publication-time vintages for ERA5, MODIS, GLW, FAOSTAT, and boundary products are not reconstructed, so this specification does not claim a complete real-time historical product-vintage replay.
 
-## Scope and availability boundary
+## Reproducibility scope
 
-The channel manifest identifies the sources and the frozen causal-lag rule
-recorded for each predictor. This release does not reconstruct historical
-product vintages for ERA5, host statistics, or NDVI; it must not be described
-as a complete historical real-time data-vintage replay. The transformations
-above document preprocessing, not source-data release-time availability.
-
-## Source provenance
-
-The transformation details were checked against the final training-loader
-source used in the local project audit (`stage3b_run_temporal_gru_tcn_baselines_v1.py`).
-That full loader is intentionally not published because it includes private
-data-pipeline and experiment code. Its audited SHA-256 is recorded in the
-project's local provenance audit as
-`e271ac2b720b7e58de2abd1d9324d1c755f7f2382aace30fb18b72bb9db291f6`. This
-public release does not claim that the entire loader can be reconstructed from
-this document alone.
+This page records the method as stated in the manuscript and Supplementary Data S1. The model-only repository does not include raw data, feature arrays, fitted TRAIN statistics, or the full private data loader. The CSV is the submitted field-level manifest; it is not a substitute for those assets.

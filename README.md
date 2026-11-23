@@ -48,13 +48,14 @@ instantiated but frozen. They are retained solely for strict state-dictionary
 compatibility with the formal checkpoints and do not contribute to the final
 Compact-B forward path.
 
-The training-time feature transformations and channel manifest are summarized
-in [`docs/preprocessing.md`](docs/preprocessing.md) and
+The submitted feature preprocessing and full 155-channel runtime manifest are
+documented in [`docs/preprocessing.md`](docs/preprocessing.md) and
 [`config/runtime_input_channels.csv`](config/runtime_input_channels.csv).
-The exact administrative polygon adjacency-builder source and graph assets are
-not included in this repository; the model consumes externally supplied frozen
-edge-shell arrays under the graph contract below. The adjacency-construction
-procedure is therefore not reproducible from this model-only release.
+The submitted administrative graph specification is documented in
+[`docs/graph_construction.md`](docs/graph_construction.md). The executable
+polygon adjacency builder, source polygons, and frozen edge arrays are not
+included; the graph method is described, but graph construction cannot be
+reproduced computationally from this model-only release.
 
 The formal architecture has 255,932 trainable parameters and 526,532 total
 instantiated parameters, including frozen compatibility modules.
